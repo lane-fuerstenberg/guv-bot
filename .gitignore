@@ -1,5 +1,5 @@
 
-./src/main/resources/token.txt
+src/main/resources/token.txt
 build/*
 
 
