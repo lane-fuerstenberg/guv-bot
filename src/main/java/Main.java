@@ -7,12 +7,14 @@ import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionType;
+import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 
 public class Main {
     static final String STEVECORD_ID = "301196256116473868";
@@ -23,6 +25,8 @@ public class Main {
         Optional<Server> server = api.getServerById(STEVECORD_ID);
         CommandHandler commandHandler = new CommandHandler();
 
+        //these commands technically don't need to be even kept in code because the server stores them after first run
+        //but like what if they get deleted... I don't want to figure out how to make these again
         SlashCommand quoteAdd =
                 SlashCommand.with("quote-add", "Add a new quote",
                         Arrays.asList(
@@ -37,6 +41,13 @@ public class Main {
                         Arrays.asList(
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "name", "The name of the quote you want to retrieve", true)
+                        )).createForServer(server.get()).join();
+
+        SlashCommand feedback =
+                SlashCommand.with("feedback", "Give feedback/suggestions/improvements you want this bot to have",
+                        Arrays.asList(
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "input", "Type your feedback here", true)
                         )).createForServer(server.get()).join();
 
 //        SlashCommand command =
@@ -99,10 +110,13 @@ public class Main {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
             System.out.println(interaction.getCommandId());
             //command handler finds command from ID then runs it passing interaction
-            commandHandler.getCommand(interaction.getCommandId()).run(interaction);
+            CompletableFuture<InteractionOriginalResponseUpdater> response = commandHandler.getCommand(interaction.getCommandId()).run(interaction);
 
-            TextChannel textChannel = interaction.getChannel().get();
-            new MessageBuilder().append(EMOTE_CALLING_CARD).send(textChannel);
+            //sync follow-up response for after initial commands response
+            response.thenRun(() -> {
+                TextChannel textChannel = interaction.getChannel().get();
+                new MessageBuilder().append(EMOTE_CALLING_CARD).send(textChannel);
+            });
         });
     }
 

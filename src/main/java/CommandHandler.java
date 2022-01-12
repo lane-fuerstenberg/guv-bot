@@ -1,44 +1,69 @@
+import JSONSingleton.FeedbackJSONSingleton;
+import JSONSingleton.QuoteJSONSingleton;
 import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
     HashMap<Long, Command> commandHashMap;
-    final String EMOTE_CALLING_CARD = "<:C12:710506476208390216>";
-    final Long ECHO_ID = 930410293031473192L;
     final Long QUOTE_ID = 930450163095449601L;
     final Long QUOTE_ADD_ID = 930779269817303050L;
+    final Long FEEDBACK_ID = 930812403984265216L;
 
     interface Command {
-        void run(SlashCommandInteraction interaction);
+        CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
     }
 
     public CommandHandler() {
         commandHashMap = new HashMap<>();
-        commandHashMap.put(ECHO_ID, interaction -> echo(interaction));
         commandHashMap.put(QUOTE_ID, interaction ->  quoteRetrieve(interaction));
         commandHashMap.put(QUOTE_ADD_ID, interaction -> quoteAdd(interaction));
+        commandHashMap.put(FEEDBACK_ID, interaction -> addFeedback(interaction));
+        //todo: remove quote command
+        //todo: blacklist user command
+        //todo: view quotes
     }
 
-    private void quoteAdd(SlashCommandInteraction interaction) {
+    private  CompletableFuture<InteractionOriginalResponseUpdater> addFeedback(SlashCommandInteraction interaction) {
+        String input = interaction.getOptionStringValueByName("input").orElse("");
+        String userID = interaction.getUser().getIdAsString();
+        String date = interaction.getCreationTimestamp().toString();
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("input", input);
+        jsonObject.put("user-id", userID);
+        jsonObject.put("date", date);
+
+        if (FeedbackJSONSingleton.appendToJSON(jsonObject)) {
+            return interaction.createImmediateResponder().setContent("Your feedback has been received.").respond();
+        } else {
+            return interaction.createImmediateResponder().setContent("Your quote has **not** been received.").respond();
+        }
+    }
+
+    private  CompletableFuture<InteractionOriginalResponseUpdater> quoteAdd(SlashCommandInteraction interaction) {
         String name = interaction.getOptionStringValueByName("name").orElse("");
         String content = interaction.getOptionStringValueByName("content").orElse("");
+        String userID = interaction.getUser().getIdAsString();
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", name);
         jsonObject.put("content", content);
+        jsonObject.put("user-id", userID);
 
-        if (JSONWrapperSingleton.appendToJSON(jsonObject)) {
-            interaction.createImmediateResponder().setContent("Your quote has been added.").respond();
+        if (QuoteJSONSingleton.appendToJSON(jsonObject)) {
+            return interaction.createImmediateResponder().setContent("Your quote has been added.").respond();
         } else {
-            interaction.createImmediateResponder().setContent("Your quote has **not** been added.").respond();
+            return interaction.createImmediateResponder().setContent("Your quote has **not** been added.").respond();
         }
     }
 
-    private void quoteRetrieve(SlashCommandInteraction interaction) {
-        JSONObject jsonObject = JSONWrapperSingleton.getInstance();
+    private CompletableFuture<InteractionOriginalResponseUpdater> quoteRetrieve(SlashCommandInteraction interaction) {
+        JSONObject jsonObject = QuoteJSONSingleton.getInstance();
 
         JSONArray quotes = jsonObject.getJSONArray("quotes");
         String quoteName = interaction.getFirstOptionStringValue().orElse("");
@@ -48,17 +73,11 @@ public class CommandHandler {
 
             if (quoteJSONObject.getString("name").equals(quoteName)) {
                 String content = quoteJSONObject.getString("content");
-                interaction.createImmediateResponder().setContent(content).respond();
+                return interaction.createImmediateResponder().setContent(content).respond();
             }
         }
 
-        interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
-    }
-
-    private void echo(SlashCommandInteraction interaction) {
-        String content = interaction.getFirstOptionStringValue().orElse("");
-        System.out.println(content);
-        interaction.createImmediateResponder().setContent(content + "\n" + EMOTE_CALLING_CARD).respond();
+        return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
     }
 
     public Command getCommand(long commandID) {

@@ -1,3 +1,5 @@
+package JSONSingleton;
+
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -7,20 +9,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-
-
-public class JSONWrapperSingleton {
+//todo: these singletons are basically exactly the same but I don't know if adding a parent is viable
+public class FeedbackJSONSingleton {
     //private and static, so it can only be accessed via getInstance()
-    private static JSONObject quoteJSONObject;
+    private static JSONObject feedbackJSONObject;
+    private final static String FEEDBACK_FILE_PATH = "src/main/resources/feedback.json";
 
     //private constructor so class can only be accessed statically
-    private JSONWrapperSingleton() {}
-
-    public static JSONObject getInstance() {
-        initializeIfSingletonIsNull();
-
-        return quoteJSONObject;
-    }
+    private FeedbackJSONSingleton() {}
 
     public static boolean appendToJSON(JSONObject jsonObject) {
         Boolean successState = false;
@@ -28,12 +24,12 @@ public class JSONWrapperSingleton {
         initializeIfSingletonIsNull();
 
 
-        JSONArray quotes = quoteJSONObject.getJSONArray("quotes");
+        JSONArray quotes = feedbackJSONObject.getJSONArray("feedback");
         quotes.put(jsonObject);
 
-        synchronized (JSONWrapperSingleton.class) {
-            try (FileWriter file = new FileWriter("src/main/resources/quote.json")) {
-                file.write(quoteJSONObject.toString());
+        synchronized (FeedbackJSONSingleton.class) {
+            try (FileWriter file = new FileWriter(FEEDBACK_FILE_PATH)) {
+                file.write(feedbackJSONObject.toString());
                 successState = true;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -44,14 +40,14 @@ public class JSONWrapperSingleton {
     }
 
     private static void initializeIfSingletonIsNull() {
-        if (quoteJSONObject == null) {
+        if (feedbackJSONObject == null) {
             //delays synchronization only when jsonObject is null for performance reasons
-            synchronized (JSONWrapperSingleton.class) {
+            synchronized (FeedbackJSONSingleton.class) {
 
                 //if null, then instantiate
-                if (quoteJSONObject == null) {
+                if (feedbackJSONObject == null) {
 
-                    File file = new File("src/main/resources/quote.json");
+                    File file = new File(FEEDBACK_FILE_PATH);
                     String json = null;
 
                     try {
@@ -60,7 +56,7 @@ public class JSONWrapperSingleton {
                         e.printStackTrace();
                     }
 
-                    quoteJSONObject = new JSONObject(json);
+                    feedbackJSONObject = new JSONObject(json);
                 }
             }
         }
