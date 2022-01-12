@@ -27,14 +27,17 @@ public class JSONWrapperSingleton {
 
         initializeIfSingletonIsNull();
 
+
         JSONArray quotes = quoteJSONObject.getJSONArray("quotes");
         quotes.put(jsonObject);
 
-        try (FileWriter file = new FileWriter("src/main/resources/quote.json")) {
-            file.write(quoteJSONObject.toString());
-            successState = true;
-        } catch (Exception e) {
-            e.printStackTrace();
+        synchronized (JSONWrapperSingleton.class) {
+            try (FileWriter file = new FileWriter("src/main/resources/quote.json")) {
+                file.write(quoteJSONObject.toString());
+                successState = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         return successState;
