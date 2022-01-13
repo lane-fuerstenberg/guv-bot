@@ -10,9 +10,10 @@ import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
     HashMap<String, Command> commandHashMap;
-    final String QUOTE_ID = "quote";
-    final String QUOTE_ADD_ID = "quote-add";
-    final String FEEDBACK_ID = "feedback";
+    final String QUOTE_COMMAND = "quote";
+    final String QUOTE_ADD_COMMAND = "quote-add";
+    final String FEEDBACK_COMMAND = "feedback";
+    final String REMOVE_QUOTE_COMMAND = "remove-quote";
 
     interface Command {
         CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
@@ -20,12 +21,21 @@ public class CommandHandler {
 
     public CommandHandler() {
         commandHashMap = new HashMap<>();
-        commandHashMap.put(QUOTE_ID, interaction ->  quoteRetrieve(interaction));
-        commandHashMap.put(QUOTE_ADD_ID, interaction -> quoteAdd(interaction));
-        commandHashMap.put(FEEDBACK_ID, interaction -> addFeedback(interaction));
-        //todo: remove quote command
+        commandHashMap.put(QUOTE_COMMAND, interaction ->  quoteRetrieve(interaction));
+        commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
+        commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
+        commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
         //todo: blacklist user command
         //todo: view quotes
+    }
+
+    private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) {
+        String name = interaction.getOptionStringValueByName("name").orElse("");
+
+        //todo: put in request for database to remove the thing by name
+        //database not available at current time
+
+        return interaction.createImmediateResponder().setContent("The quote has **not** been removed.").respond();
     }
 
     private  CompletableFuture<InteractionOriginalResponseUpdater> addFeedback(SlashCommandInteraction interaction) {
