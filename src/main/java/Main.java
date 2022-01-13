@@ -52,7 +52,11 @@ public class Main {
                 SlashCommand.with("remove-quote", "Remove a quote by name",
                         Arrays.asList(
                                 SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "name", "Type the quote's name here", true)
+                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user")
                         )).setDefaultPermission(false).createForServer(server.get()).join();
 
         Long id = remove.getId();
@@ -62,7 +66,6 @@ public class Main {
         ).update(id).join();
 
 
-//931241419576848474
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
             System.out.println(interaction.getCommandId());
