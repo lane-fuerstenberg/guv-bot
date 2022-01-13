@@ -2,16 +2,13 @@ import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
-import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.SlashCommandOption;
-import org.javacord.api.interaction.SlashCommandOptionType;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +24,7 @@ public class Main {
 
         //these commands technically don't need to be even kept in code because the server stores them after first run
         //but like what if they get deleted... I don't want to figure out how to make these again
-        SlashCommand quoteAdd =
+        /*SlashCommand quoteAdd =
                 SlashCommand.with("quote-add", "Add a new quote",
                         Arrays.asList(
                                 SlashCommandOption.create
@@ -48,7 +45,7 @@ public class Main {
                         Arrays.asList(
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "input", "Type your feedback here", true)
-                        )).createForServer(server.get()).join();
+                        )).createForServer(server.get()).join();*/
 
 //        SlashCommand command =
 //                SlashCommand.with("quote", "Create or call upon quotes", Arrays.asList(
@@ -105,6 +102,16 @@ public class Main {
 //                )
 //            ).createForServer(server.get()).join();
 
+        api.addMessageCreateListener(event -> {
+            if (event.getMessageContent().equalsIgnoreCase("!list")) {
+                ListAllEmbed embed = new ListAllEmbed();
+
+                EmbedBuilder content = embed.CreateEmbed();
+
+                event.getChannel().sendMessage(content);
+
+            }
+        });
 
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
@@ -131,8 +138,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        DiscordApi api = new DiscordApiBuilder().setToken(token).login().join();
-        return api;
+        return new DiscordApiBuilder().setToken(token).login().join();
     }
 }
 
