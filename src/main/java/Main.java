@@ -110,7 +110,8 @@ public class Main {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
             System.out.println(interaction.getCommandId());
             //command handler finds command from ID then runs it passing interaction
-            CompletableFuture<InteractionOriginalResponseUpdater> response = commandHandler.getCommand(interaction.getCommandId()).run(interaction);
+
+            CompletableFuture<InteractionOriginalResponseUpdater> response = commandHandler.getCommand(interaction.getCommandName()).run(interaction);
 
             //sync follow-up response for after initial commands response
             response.thenRun(() -> {

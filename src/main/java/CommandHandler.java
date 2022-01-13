@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
-    HashMap<Long, Command> commandHashMap;
-    final Long QUOTE_ID = 930450163095449601L;
-    final Long QUOTE_ADD_ID = 930779269817303050L;
-    final Long FEEDBACK_ID = 930812403984265216L;
+    HashMap<String, Command> commandHashMap;
+    final String QUOTE_ID = "quote";
+    final String QUOTE_ADD_ID = "quote-add";
+    final String FEEDBACK_ID = "feedback";
 
     interface Command {
         CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
@@ -80,7 +80,7 @@ public class CommandHandler {
         return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
     }
 
-    public Command getCommand(long commandID) {
+    public Command getCommand(String commandID) {
         return commandHashMap.get(commandID);
     }
 }
