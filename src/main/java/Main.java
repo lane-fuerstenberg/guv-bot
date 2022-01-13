@@ -3,10 +3,7 @@ import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.server.Server;
-import org.javacord.api.interaction.SlashCommand;
-import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.SlashCommandOption;
-import org.javacord.api.interaction.SlashCommandOptionType;
+import org.javacord.api.interaction.*;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
 import java.io.File;
@@ -19,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 public class Main {
     static final String STEVECORD_ID = "301196256116473868";
     static final String EMOTE_CALLING_CARD = "<:Drip:798892442056130590>";
+    static final Long ADMIN_ROLE = 516094816040386571L;
 
     public static void main(String[] args) {
         DiscordApi api = getDiscordApi();
@@ -50,62 +48,21 @@ public class Main {
                                         (SlashCommandOptionType.STRING, "input", "Type your feedback here", true)
                         )).createForServer(server.get()).join();
 
-//        SlashCommand command =
-//                SlashCommand.with("quote", "Create or call upon quotes", Arrays.asList(
-//                        SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, "edit", "Edits a channel", Arrays.asList(
-//                                SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "add", "Adds quote", Arrays.asList(
-//
-//                                )
-//                                )
-//                        )
-//                ).createForServer(server.get()).join();
+        SlashCommand remove =
+                SlashCommand.with("remove-quote", "Remove a quote by name",
+                        Arrays.asList(
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "name", "Type the quote's name here", true)
+                        )).setDefaultPermission(false).createForServer(server.get()).join();
 
-//this one
-//        SlashCommand command =
-//                SlashCommand.with("quote", "Create or call upon quotes",
-//                    Arrays.asList(
-//                            SlashCommandOption.create
-//                            (SlashCommandOptionType.STRING, "quote", "The name of the quote you want to retrieve"),
-//                            SlashCommandOption.createWithOptions()
-//                                    (SlashCommandOptionType.STRING, "quote2", "The name of the quote2 you want to retrieve")
-//                    )).createForServer(server.get()).join();
-
-//        SlashCommand command =
-//                SlashCommand.with("quote", "Create or call upon quotes",
-//                        Arrays.asList(
-//                                SlashCommandOption.createWithOptions
-//                                (SlashCommandOptionType.SUB_COMMAND, "add", "Add a new quote"),
-//                                        SlashCommandOption.create
-//                                        (SlashCommandOptionType.STRING, "name", "The name of the quote you want to save"),
-//                                        SlashCommandOption.create
-//                                        (SlashCommandOptionType.STRING, "content", "The content of the quote you want to save")))
-//                                        .createForServer(server.get()).join();
-
-//        SlashCommand command =
-//            SlashCommand.with("channel", "A command dedicated to channels",
-//                Arrays.asList(
-//                    SlashCommandOption.create(SlashCommandOptionType.STRING, "quote", "The name of the quote you want to retrieve"),
-//
-//                    SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, "edit", "Edits a channel",
-//                        Arrays.asList(
-//                            SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, "allow", "Allows a permission to a user for a channel",
-//                                Arrays.asList(
-//                                    SlashCommandOption.create(SlashCommandOptionType.CHANNEL, "CHANNEL", "The channel to modify", true),
-//                                    SlashCommandOption.create(SlashCommandOptionType.USER, "USER", "The user which permissions should be changed", true),
-//                                    SlashCommandOption.createWithChoices(SlashCommandOptionType.INTEGER, "PERMISSION", "The permission to allow", true,
-//                                        Arrays.asList(
-//                                                SlashCommandOptionChoice.create("MANAGE", 0),
-//                                                SlashCommandOptionChoice.create("SHOW", 1)
-//                                        )
-//                                    )
-//                                )
-//                            )
-//                        )
-//                    )
-//                )
-//            ).createForServer(server.get()).join();
+        Long id = remove.getId();
+        new SlashCommandPermissionsUpdater(server.get()).setPermissions(
+                Arrays.asList(
+                        SlashCommandPermissions.create(ADMIN_ROLE, SlashCommandPermissionType.ROLE, true))
+        ).update(id).join();
 
 
+//931241419576848474
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
             System.out.println(interaction.getCommandId());
@@ -114,6 +71,7 @@ public class Main {
             CompletableFuture<InteractionOriginalResponseUpdater> response = commandHandler.getCommand(interaction.getCommandName()).run(interaction);
 
             //sync follow-up response for after initial commands response
+            //this is just so the bot uses a funny emote every time it responds to a command
             response.thenRun(() -> {
                 TextChannel textChannel = interaction.getChannel().get();
                 new MessageBuilder().append(EMOTE_CALLING_CARD).send(textChannel);
@@ -136,17 +94,3 @@ public class Main {
         return api;
     }
 }
-
-
-
-
-
-//ARCHIVE
-/*
-        SlashCommand command =
-                SlashCommand.with("quote", "Create or call upon quotes",
-                    Arrays.asList(
-                            SlashCommandOption.create
-                            (SlashCommandOptionType.STRING, "quote", "The name of the quote you want to retrieve")
-                    )).createForServer(server.get()).join();
- */
