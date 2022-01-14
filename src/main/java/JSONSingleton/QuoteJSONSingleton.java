@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 
-//todo: these singletons are basically exactly the same but I don't know if adding a parent is viable
+//todo: JSON singletons are being replaced with single SQL Lite database file
 public class QuoteJSONSingleton {
     public static final String QUOTE_FILE_PATH = "src/main/resources/quote.json";
     //private and static, so it can only be accessed via getInstance()
