@@ -14,6 +14,7 @@ public class CommandHandler {
     final String QUOTE_ADD_COMMAND = "quote-add";
     final String FEEDBACK_COMMAND = "feedback";
     final String REMOVE_QUOTE_COMMAND = "remove-quote";
+    final String SEARCH_QUOTE_COMMAND = "search-quote";
 
     interface Command {
         CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
@@ -25,8 +26,26 @@ public class CommandHandler {
         commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
         commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
         commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
+        commandHashMap.put(SEARCH_QUOTE_COMMAND, interaction -> searchCommand(interaction));
         //todo: blacklist user command
         //todo: view quotes
+    }
+
+    private CompletableFuture<InteractionOriginalResponseUpdater> searchCommand(SlashCommandInteraction interaction) {
+        JSONObject object = QuoteJSONSingleton.getInstance();
+        JSONArray quotes = object.getJSONArray("quotes");
+
+        for (int i = 0; i < quotes.length(); i++) {
+            JSONObject quote = quotes.getJSONObject(i);
+
+            String name = quote.getString("name");
+            String content = quote.getString("content");
+            String userID = quote.getString("user-id");
+
+
+        }
+
+        return interaction.createImmediateResponder().setContent("No result found.").respond();
     }
 
     private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) {

@@ -48,8 +48,8 @@ public class Main {
                                         (SlashCommandOptionType.STRING, "input", "Type your feedback here", true)
                         )).createForServer(server.get()).join();
 
-        SlashCommand remove =
-                SlashCommand.with("remove-quote", "Remove a quote by name",
+        SlashCommand search =
+                SlashCommand.with("search-quote", "Search for a quote",
                         Arrays.asList(
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
@@ -57,6 +57,19 @@ public class Main {
                                         (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user")
+                        )).createForServer(server.get()).join();
+
+        SlashCommand remove =
+                SlashCommand.with("remove-quote", "Remove a quote",
+                        Arrays.asList(
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.BOOLEAN, "recursive", "Delete all found quotes (default of false)")
                         )).setDefaultPermission(false).createForServer(server.get()).join();
 
         Long id = remove.getId();
