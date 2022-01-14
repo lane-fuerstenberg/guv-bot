@@ -105,6 +105,11 @@ public class Main {
 //                )
 //            ).createForServer(server.get()).join();
 
+        api.addMessageCreateListener(event -> {
+            if (event.getMessageContent().equalsIgnoreCase("!db")) {
+                DataBase db = new DataBase();
+            }
+        });
 
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
