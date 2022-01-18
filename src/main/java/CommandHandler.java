@@ -1,3 +1,4 @@
+import Database.DataBase;
 import JSONSingleton.FeedbackJSONSingleton;
 import JSONSingleton.QuoteJSONSingleton;
 import org.javacord.api.interaction.SlashCommandInteraction;
@@ -5,7 +6,10 @@ import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
@@ -14,6 +18,7 @@ public class CommandHandler {
     final String QUOTE_ADD_COMMAND = "quote-add";
     final String FEEDBACK_COMMAND = "feedback";
     final String REMOVE_QUOTE_COMMAND = "remove-quote";
+    final String GET_QUOTE_COMMAND = "get-quote";
 
     interface Command {
         CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
@@ -21,7 +26,14 @@ public class CommandHandler {
 
     public CommandHandler() {
         commandHashMap = new HashMap<>();
-        commandHashMap.put(QUOTE_COMMAND, interaction ->  quoteRetrieve(interaction));
+        commandHashMap.put(QUOTE_COMMAND, interaction -> {
+            try {
+                return quoteRetrieve(interaction);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        });
         commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
         commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
         commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
@@ -72,22 +84,15 @@ public class CommandHandler {
         }
     }
 
-    private CompletableFuture<InteractionOriginalResponseUpdater> quoteRetrieve(SlashCommandInteraction interaction) {
-        JSONObject jsonObject = QuoteJSONSingleton.getInstance();
-
-        JSONArray quotes = jsonObject.getJSONArray("quotes");
+    private CompletableFuture<InteractionOriginalResponseUpdater> quoteRetrieve(SlashCommandInteraction interaction) throws SQLException {
         String quoteName = interaction.getFirstOptionStringValue().orElse("");
 
-        for (int i = 0; i < quotes.length(); i++) {
-            JSONObject quoteJSONObject = quotes.getJSONObject(i);
+        ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, quoteName);
 
-            if (quoteJSONObject.getString("name").equals(quoteName)) {
-                String content = quoteJSONObject.getString("content");
-                return interaction.createImmediateResponder().setContent(content).respond();
-            }
-        }
+        if(results == null) return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
 
-        return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
+        String content = results.getString("Content");
+        return interaction.createImmediateResponder().setContent(content).respond();
     }
 
     public Command getCommand(String commandID) {
