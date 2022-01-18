@@ -109,3 +109,17 @@ public class Main {
         return api;
     }
 }
+
+
+
+
+
+//ARCHIVE
+/*
+        SlashCommand command =
+                SlashCommand.with("quote", "Create or call upon quotes",
+                    Arrays.asList(
+                            SlashCommandOption.create
+                            (SlashCommandOptionType.STRING, "quote", "The name of the quote you want to retrieve")
+                    )).createForServer(server.get()).join();
+ */
