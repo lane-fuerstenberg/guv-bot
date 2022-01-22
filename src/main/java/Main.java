@@ -78,6 +78,19 @@ public class Main {
                                         (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user")
                         )).setDefaultPermission(false).createForServer(server.get()).join();
 
+        SlashCommand search =
+                SlashCommand.with("search-quote", "Search for a quote",
+                        Arrays.asList(
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
+                                SlashCommandOption.create
+                                        (SlashCommandOptionType.USER, "user", "Search for quotes made by this user")
+                        )).createForServer(server.get()).join();
+
+        commands.add(search);
+
         Long id = remove.getId();
         new SlashCommandPermissionsUpdater(server.get()).setPermissions(
                 Arrays.asList(

@@ -1,15 +1,18 @@
 import Database.DataBase;
 import JSONSingleton.FeedbackJSONSingleton;
 import JSONSingleton.QuoteJSONSingleton;
+import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.xml.crypto.Data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
@@ -18,7 +21,7 @@ public class CommandHandler {
     final String QUOTE_ADD_COMMAND = "quote-add";
     final String FEEDBACK_COMMAND = "feedback";
     final String REMOVE_QUOTE_COMMAND = "remove-quote";
-    final String GET_QUOTE_COMMAND = "get-quote";
+    final String SEARCH_QUOTE_COMMAND = "search-quote";
 
     interface Command {
         CompletableFuture<InteractionOriginalResponseUpdater> run(SlashCommandInteraction interaction);
@@ -34,11 +37,49 @@ public class CommandHandler {
                 return null;
             }
         });
+
         commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
         commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
         commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
+
+        commandHashMap.put(SEARCH_QUOTE_COMMAND, interaction -> {
+            try {
+                return searchQuote(interaction);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        });
         //todo: blacklist user command
         //todo: view quotes
+    }
+
+    private CompletableFuture<InteractionOriginalResponseUpdater> searchQuote(SlashCommandInteraction interaction) throws SQLException {
+        String name = interaction.getOptionStringValueByName("name").orElse("");
+        String content = interaction.getOptionStringValueByName("content").orElse("");
+        User user = (User) interaction.requestOptionUserValueByName("user").orElse(null);
+
+        if(!name.equals("")){
+            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, name);
+            while (results.next()){
+                System.out.println(results.getString("Content"));
+            }
+        }
+        else if(!content.equals("")){
+            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Content, content);
+            while (results.next()){
+                System.out.println(results.getString("Content"));
+            }
+        }
+        else if(user != null){
+            String id = String.valueOf(user.getId());
+            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.UID, id);
+            while (results.next()){
+                System.out.println(results.getString("Content"));
+            }
+        }
+
+        return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
     }
 
     private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) {
@@ -63,7 +104,7 @@ public class CommandHandler {
         if (FeedbackJSONSingleton.appendToJSON(jsonObject)) {
             return interaction.createImmediateResponder().setContent("Your feedback has been received.").respond();
         } else {
-            return interaction.createImmediateResponder().setContent("Your quote has **not** been received.").respond();
+            return interaction.createImmediateResponder().setContent("Your feedback has **not** been received.").respond();
         }
     }
 

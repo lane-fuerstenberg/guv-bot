@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.sql.*;
 
 public class DataBase {
-
     private static DataBase dataBase = null;
     final Path currentDir = Paths.get(System.getProperty("user.dir"));
     final Path filePath = Paths.get(currentDir.toString(), "src\\main\\resources", "main.db");
@@ -34,7 +33,7 @@ public class DataBase {
         System.out.println("Opened database successfully");
     }
 
-    //TODO: Get Entry --all, UID, content, name
+    //TODO: Get Entry --UID, content, name
     //Should return ResultSet
     public ResultSet GetQuotes(GetByType getByType, String value){
         if(c == null) return null;
@@ -69,9 +68,6 @@ public class DataBase {
                     System.out.println(e.getMessage());
                 }
             }
-            default -> {
-                return null;
-            }
         }
         return null;
     }
@@ -80,5 +76,5 @@ public class DataBase {
 
     //TODO: Delete Entry -- UID, name
 
-    //TODO: Update Entry
+    //TODO: Update Entry?
 }
