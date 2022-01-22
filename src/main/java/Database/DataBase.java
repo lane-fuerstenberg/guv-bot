@@ -39,7 +39,8 @@ public class DataBase {
         if(c == null) return null;
         switch (getByType){
             case UID -> {
-                String query = String.format("SELECT * FROM Quotes WHERE Author == %d;", Integer.parseInt(value));
+                long uid = Long.parseLong(value);
+                String query = String.format("SELECT * FROM Quotes WHERE Author = %d;", uid);
                 try {
                     Statement statement = c.createStatement();
                     return statement.executeQuery(query);
@@ -72,7 +73,7 @@ public class DataBase {
         return null;
     }
 
-    //TODO: Create Entry -- UID, name, content
+    //TODO: Create Entry -- UID, name (Character limit?), content (Character limit?)
 
     //TODO: Delete Entry -- UID, name
 

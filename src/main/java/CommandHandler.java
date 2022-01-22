@@ -1,6 +1,4 @@
 import Database.DataBase;
-import JSONSingleton.FeedbackJSONSingleton;
-import JSONSingleton.QuoteJSONSingleton;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
@@ -41,45 +39,61 @@ public class CommandHandler {
         commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
         commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
         commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
-
-        commandHashMap.put(SEARCH_QUOTE_COMMAND, interaction -> {
-            try {
-                return searchQuote(interaction);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-                return null;
-            }
+        commandHashMap.put(SEARCH_QUOTE_COMMAND, interaction ->{
+                try {
+                    return searchCommand(interaction);
+                } catch (SQLException e){
+                    System.out.println(e.getMessage());
+                    return null;
+                }
         });
         //todo: blacklist user command
         //todo: view quotes
     }
 
-    private CompletableFuture<InteractionOriginalResponseUpdater> searchQuote(SlashCommandInteraction interaction) throws SQLException {
+    private CompletableFuture<InteractionOriginalResponseUpdater> searchCommand(SlashCommandInteraction interaction) throws SQLException {
         String name = interaction.getOptionStringValueByName("name").orElse("");
         String content = interaction.getOptionStringValueByName("content").orElse("");
-        User user = (User) interaction.requestOptionUserValueByName("user").orElse(null);
+        String user = interaction.getOptionStringValueByName("user").orElse("");
+        String message = "";
 
         if(!name.equals("")){
             ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, name);
-            while (results.next()){
-                System.out.println(results.getString("Content"));
+            try {
+                message = determineSearchResultMessage(results);
+            } catch (SQLException e){
+                System.out.println(e.getMessage());
             }
         }
         else if(!content.equals("")){
             ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Content, content);
-            while (results.next()){
-                System.out.println(results.getString("Content"));
+            try {
+                message = determineSearchResultMessage(results);
+            } catch (SQLException e){
+                System.out.println(e.getMessage());
+            }
+        } else if(!user.equals("")){
+            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.UID, user);
+            try {
+                message = determineSearchResultMessage(results);
+            } catch (SQLException e){
+                System.out.println(e.getMessage());
             }
         }
-        else if(user != null){
-            String id = String.valueOf(user.getId());
-            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.UID, id);
-            while (results.next()){
-                System.out.println(results.getString("Content"));
-            }
-        }
+        return interaction.createImmediateResponder().setContent(message).respond();
+    }
 
-        return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
+    private String determineSearchResultMessage(ResultSet results) throws SQLException {
+        boolean isEmpty = true;
+        String message = "";
+        while(results.next()) {
+            isEmpty = false;
+            message += results.getString("name") + ": " + results.getString("content") + "\n";
+        }
+        if(isEmpty){
+            message = "No result found.";
+        }
+        return message;
     }
 
     private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) {
@@ -96,7 +110,7 @@ public class CommandHandler {
         String userID = interaction.getUser().getIdAsString();
         String date = interaction.getCreationTimestamp().toString();
 
-        JSONObject jsonObject = new JSONObject();
+        /*JSONObject jsonObject = new JSONObject();
         jsonObject.put("input", input);
         jsonObject.put("user-id", userID);
         jsonObject.put("date", date);
@@ -105,14 +119,15 @@ public class CommandHandler {
             return interaction.createImmediateResponder().setContent("Your feedback has been received.").respond();
         } else {
             return interaction.createImmediateResponder().setContent("Your feedback has **not** been received.").respond();
-        }
+        }*/
+        return null;
     }
 
     private  CompletableFuture<InteractionOriginalResponseUpdater> quoteAdd(SlashCommandInteraction interaction) {
         String name = interaction.getOptionStringValueByName("name").orElse("");
         String content = interaction.getOptionStringValueByName("content").orElse("");
         String userID = interaction.getUser().getIdAsString();
-
+        /*
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", name);
         jsonObject.put("content", content);
@@ -122,7 +137,8 @@ public class CommandHandler {
             return interaction.createImmediateResponder().setContent("Your quote has been added.").respond();
         } else {
             return interaction.createImmediateResponder().setContent("Your quote has **not** been added.").respond();
-        }
+        }*/
+        return null;
     }
 
     private CompletableFuture<InteractionOriginalResponseUpdater> quoteRetrieve(SlashCommandInteraction interaction) throws SQLException {
