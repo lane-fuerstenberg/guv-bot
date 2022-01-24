@@ -75,7 +75,7 @@ public class Main {
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
                                 SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user")
+                                        (SlashCommandOptionType.USER, "user", "Search for quotes made by this user")
                         )).createForServer(server.get()).join();
 
         SlashCommand remove =
@@ -90,6 +90,8 @@ public class Main {
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.BOOLEAN, "recursive", "Delete all found quotes (default of false)")
                         )).setDefaultPermission(false).createForServer(server.get()).join();
+
+        commands.add(search);
 
         Long id = remove.getId();
         new SlashCommandPermissionsUpdater(server.get()).setPermissions(
