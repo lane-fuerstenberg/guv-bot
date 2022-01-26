@@ -26,7 +26,7 @@ public class Main {
         Optional<Server> server = api.getServerById(STEVECORD_ID);
         CommandHandler commandHandler = new CommandHandler();
 
-        createCommands(server);
+        //createCommands(server);
 
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
