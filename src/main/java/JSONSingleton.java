@@ -28,8 +28,8 @@ public class JSONSingleton {
         initializeIfSingletonIsNull();
 
 
-        JSONArray quotes = JSONSingleton.getJSONArray(arrayName);
-        quotes.put(jsonObject);
+        JSONArray jsonArray = JSONSingleton.getJSONArray(arrayName);
+        jsonArray.put(jsonObject);
 
         synchronized (JSONSingleton.class) {
         try (FileWriter file = new FileWriter(FILE_PATH)) {
@@ -37,6 +37,32 @@ public class JSONSingleton {
                 successState = true;
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+
+        return successState;
+    }
+
+    public static boolean removeFromJSON(JSONObject jsonObject, String arrayName, String key) {
+        Boolean successState = false;
+        initializeIfSingletonIsNull();
+
+        JSONArray jsonArray = JSONSingleton.getJSONArray(arrayName);
+        String matchingName = jsonObject.getString(key);
+        for (int i = 0; i < jsonArray.length(); i++) {
+
+            if (jsonArray.getJSONObject(i).getString(key).equals(matchingName)) {
+                synchronized (JSONSingleton.class) {
+                    jsonArray.remove(i);
+                    try (FileWriter file = new FileWriter(FILE_PATH)) {
+                        file.write(JSONSingleton.toString());
+                        successState = true;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                break;
             }
         }
 

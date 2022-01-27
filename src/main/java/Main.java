@@ -5,6 +5,7 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.interaction.*;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
+import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,8 +18,7 @@ import java.util.concurrent.CompletableFuture;
 public class Main {
     static final String STEVECORD_ID = "301196256116473868";
     static final String EMOTE_CALLING_CARD = "<:Drip:798892442056130590>";
-    static final Long MOD_ROLE = 516094816040386571L; //stevecord mod role ID: 525678167818764328
-    static final Long BLACKLIST_ROLE = 931608346430152714L;
+    static final Long MOD_ROLE = 516094816040386572L; //stevecord mod role ID: 525678167818764328
     static ArrayList<SlashCommand> commands;
 
     public static void main(String[] args) {
@@ -26,12 +26,17 @@ public class Main {
         Optional<Server> server = api.getServerById(STEVECORD_ID);
         CommandHandler commandHandler = new CommandHandler();
 
-        //createCommands(server);
+        createCommands(server);
 
         api.addSlashCommandCreateListener(event -> {
             SlashCommandInteraction interaction = event.getSlashCommandInteraction();
             //command handler finds the respective command then runs it passing interaction
-            CompletableFuture<InteractionOriginalResponseUpdater> response = commandHandler.getCommand(interaction.getCommandName()).run(interaction);
+            CompletableFuture<InteractionOriginalResponseUpdater> response = null;
+            if (userIsBlacklisted(interaction.getUser().getIdAsString())) {
+                response = interaction.createImmediateResponder().setContent("No.").respond();
+            } else {
+                response = commandHandler.getCommand(interaction.getCommandName()).run(interaction);
+            }
 
             //sync follow-up response for after initial commands response
             //this is just so the bot uses a funny emote every time it responds to a command
@@ -40,6 +45,17 @@ public class Main {
                 new MessageBuilder().append(EMOTE_CALLING_CARD).send(textChannel);
             });
         });
+    }
+
+    private static Boolean userIsBlacklisted(String userID) {
+        JSONArray blacklistedUsers = JSONSingleton.getInstance().getJSONArray("blacklist");
+        for (int i = 0; i < blacklistedUsers.length(); i++) {
+            if (blacklistedUsers.getJSONObject(i).getString("user-id").equals(userID)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void createCommands(Optional<Server> server) {
@@ -64,49 +80,40 @@ public class Main {
                         Arrays.asList(
                                 SlashCommandOption.create
                                         (SlashCommandOptionType.STRING, "input", "Type your feedback here", true)
-                        )).createForServer(server.get()).join());
+                        )).setDefaultPermission(false).createForServer(server.get()).join());
 
+        SlashCommand blacklist =
+                SlashCommand.with("blacklist", "Blacklist a user",
+                Arrays.asList(
+                        SlashCommandOption.create
+                                (SlashCommandOptionType.STRING, "user", "User you will blacklist from using this bot", true),
+                        SlashCommandOption.create
+                                (SlashCommandOptionType.STRING, "justification", "Reason that this user is being blacklisted", true)
+                )).setDefaultPermission(false).createForServer(server.get()).join();
 
-        SlashCommand search =
-                SlashCommand.with("search-quote", "Search for a quote",
-                        Arrays.asList(
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.USER, "user", "Search for quotes made by this user")
-                        )).createForServer(server.get()).join();
 
         SlashCommand remove =
                 SlashCommand.with("remove-quote", "Remove a quote",
                         Arrays.asList(
                                 SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)"),
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user"),
-                                SlashCommandOption.create
-                                        (SlashCommandOptionType.BOOLEAN, "recursive", "Delete all found quotes (default of false)")
+                                        (SlashCommandOptionType.STRING, "name", "Search for quote name (only matches exacts)")
+//                                SlashCommandOption.create
+//                                        (SlashCommandOptionType.STRING, "content", "Search for quotes containing this content"),
+//                                SlashCommandOption.create
+//                                        (SlashCommandOptionType.STRING, "user-id", "Search for quotes made by this user"),
+//                                SlashCommandOption.create
+//                                        (SlashCommandOptionType.BOOLEAN, "recursive", "Delete all found quotes (default of false)")
                         )).setDefaultPermission(false).createForServer(server.get()).join();
 
-        commands.add(search);
 
-        Long id = remove.getId();
-        new SlashCommandPermissionsUpdater(server.get()).setPermissions(
+
+        SlashCommandPermissionsUpdater permissionsUpdater = new SlashCommandPermissionsUpdater(server.get()).setPermissions(
                 Arrays.asList(
                         SlashCommandPermissions.create(MOD_ROLE, SlashCommandPermissionType.ROLE, true))
-        ).update(id).join();
+        );
 
-        commands.add(remove);
-
-        for (int i = 0; i < commands.size(); i++) {
-            new SlashCommandPermissionsUpdater(server.get()).setPermissions(
-                    Arrays.asList(
-                            SlashCommandPermissions.create(BLACKLIST_ROLE, SlashCommandPermissionType.ROLE, false))
-            ).update(commands.get(i).getId()).join();
-        }
+        permissionsUpdater.update(remove.getId()).join();
+        permissionsUpdater.update(blacklist.getId()).join();
     }
 
     private static DiscordApi getDiscordApi() {
