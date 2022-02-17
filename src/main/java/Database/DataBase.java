@@ -81,9 +81,9 @@ public class DataBase {
                     }
                 }
                 case Content -> {
-                    String query = "SELECT * FROM Quotes WHERE Content LIKE '%?%';";
-                    try(PreparedStatement statement = c.prepareStatement(query)) {
-                        statement.setString(1, value);
+                    String query = String.format("SELECT * FROM Quotes WHERE Name LIKE '%%%s%%';", value);
+                    try{
+                        Statement statement = c.createStatement();
                         ResultSet results = statement.executeQuery(query);
                         while(results.next()){
                             long resultUID = results.getLong("Author");
@@ -104,9 +104,9 @@ public class DataBase {
                     }
                 }
                 case Name -> {
-                    String query = "SELECT * FROM Quotes WHERE Name LIKE '%?%';";
-                    try(PreparedStatement statement = c.prepareStatement(query)) {
-                        statement.setString(1, value);
+                    String query = String.format("SELECT * FROM Quotes WHERE Name LIKE '%%%s%%';", value);
+                    try {
+                        Statement statement = c.createStatement();
                         ResultSet results = statement.executeQuery(query);
                         while(results.next()){
                             long resultUID = results.getLong("Author");
