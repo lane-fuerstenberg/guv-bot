@@ -21,7 +21,6 @@ public class DataBaseTest {
 
     @Test
     public void CreateEntryTest() throws SQLException {
-        String expected = "test";
         long uid = 248812560923623425L;
         boolean results = DataBase.getInstance().CreateEntry(uid, "test", "test");
         Assert.assertTrue(results);

@@ -47,12 +47,10 @@ public class DataBase {
     }
     //TODO: Set up API
     private DataBase(){
-        connect();
+        //connect();
         System.out.println("Opened database successfully");
     }
 
-    //TODO: Get Entry --UID, content, name
-    //Cannot return ResultSet as the connection is closed. TODO: Find alternative
     public HashMap<Long, ArrayList<Quote>> GetQuotes(GetByType getByType, String value) throws SQLException {
         HashMap<Long, ArrayList<Quote>> quoteMap = new HashMap<Long, ArrayList<Quote>>();
         try(Connection c = this.connect()) {
@@ -133,16 +131,14 @@ public class DataBase {
         return null;
     }
 
-    //TODO: Create Entry -- UID, name (Character limit?), content (Character limit?)
     public boolean CreateEntry(long UID, String name, String content) throws SQLException {
-        //String query = String.format("INSERT INTO Quotes(Name, Author, Content) VALUES('%s', %d, '%s' );", name, UID, content);
         String query = "INSERT INTO Quotes(Author, Name, Content) VALUES(?, ?, ?);";
         try(Connection c = this.connect();
             PreparedStatement preparedStatement = c.prepareStatement(query)) {
             preparedStatement.setLong(1, UID);
             preparedStatement.setString(2, name);
             preparedStatement.setString(3, content);
-            preparedStatement.execute();
+            preparedStatement.executeUpdate();
             return true;
         }
         catch (SQLException e) {
@@ -151,7 +147,6 @@ public class DataBase {
         }
     }
 
-    //TODO: Delete Entry -- UID, name
     public Boolean RemoveEntry(GetByType getByType, String value) throws SQLException{
         try(Connection c = this.connect()) {
             switch (getByType) {
