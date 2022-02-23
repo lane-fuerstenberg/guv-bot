@@ -80,32 +80,9 @@ public class DataBase {
                         System.out.println(e.getMessage());
                     }
                 }
-                case Content -> {
+                case Content, Name -> {
                     String query = String.format("SELECT * FROM Quotes WHERE Name LIKE '%%%s%%';", value);
                     try{
-                        Statement statement = c.createStatement();
-                        ResultSet results = statement.executeQuery(query);
-                        while(results.next()){
-                            long resultUID = results.getLong("Author");
-                            String name = results.getString("Name");
-                            String content = results.getString("Content");
-                            if(quoteMap.containsKey(resultUID)){
-                                quoteMap.get(resultUID).add(new Quote(name, content));
-                            }
-                            else{
-                                ArrayList<Quote> tempList = new ArrayList<>();
-                                tempList.add(new Quote(name, content));
-                                quoteMap.put(resultUID, tempList);
-                            }
-                        }
-                        return quoteMap;
-                    } catch (SQLException e) {
-                        System.out.println(e.getMessage());
-                    }
-                }
-                case Name -> {
-                    String query = String.format("SELECT * FROM Quotes WHERE Name LIKE '%%%s%%';", value);
-                    try {
                         Statement statement = c.createStatement();
                         ResultSet results = statement.executeQuery(query);
                         while(results.next()){
@@ -184,6 +161,21 @@ public class DataBase {
             }
         }
         return false;
+    }
+
+    public Boolean AddFeedback(long UID, String content) throws SQLException {
+        String query = "INSERT INTO Feedback(UID, Content) VALUES(?, ?);";
+        try(Connection c = this.connect();
+            PreparedStatement preparedStatement = c.prepareStatement(query)){
+            preparedStatement.setLong(1, UID);
+            preparedStatement.setString(2, content);
+            preparedStatement.executeUpdate();
+            return true;
+        }
+        catch (SQLException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
     }
 
     //TODO: Update Entry?
