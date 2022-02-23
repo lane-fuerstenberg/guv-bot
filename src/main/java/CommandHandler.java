@@ -1,16 +1,11 @@
 import Database.DataBase;
-import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import javax.xml.crypto.Data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class CommandHandler {
@@ -36,9 +31,30 @@ public class CommandHandler {
             }
         });
 
-        commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> quoteAdd(interaction));
-        commandHashMap.put(FEEDBACK_COMMAND, interaction -> addFeedback(interaction));
-        commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> removeCommand(interaction));
+        commandHashMap.put(QUOTE_ADD_COMMAND, interaction -> {
+            try {
+                return quoteAdd(interaction);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        });
+        commandHashMap.put(FEEDBACK_COMMAND, interaction -> {
+            try {
+                return addFeedback(interaction);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        });
+        commandHashMap.put(REMOVE_QUOTE_COMMAND, interaction -> {
+            try {
+                return removeCommand(interaction);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return null;
+            }
+        });
         commandHashMap.put(SEARCH_QUOTE_COMMAND, interaction ->{
                 try {
                     return searchCommand(interaction);
@@ -55,100 +71,88 @@ public class CommandHandler {
         String name = interaction.getOptionStringValueByName("name").orElse("");
         String content = interaction.getOptionStringValueByName("content").orElse("");
         String user = interaction.getOptionStringValueByName("user").orElse("");
-        String message = "";
+        String message = "No results found!";
 
         if(!name.equals("")){
-            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, name);
-            try {
+            HashMap<Long, ArrayList<DataBase.Quote>> results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, name);
+            if(!results.isEmpty()){
                 message = determineSearchResultMessage(results);
-            } catch (SQLException e){
-                System.out.println(e.getMessage());
             }
         }
         else if(!content.equals("")){
-            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Content, content);
-            try {
+            HashMap<Long, ArrayList<DataBase.Quote>> results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Content, content);
+            if(!results.isEmpty()){
                 message = determineSearchResultMessage(results);
-            } catch (SQLException e){
-                System.out.println(e.getMessage());
             }
         } else if(!user.equals("")){
-            ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.UID, user);
-            try {
+            HashMap<Long, ArrayList<DataBase.Quote>> results = DataBase.getInstance().GetQuotes(DataBase.GetByType.UID, user);
+            if(!results.isEmpty()){
                 message = determineSearchResultMessage(results);
-            } catch (SQLException e){
-                System.out.println(e.getMessage());
             }
         }
         return interaction.createImmediateResponder().setContent(message).respond();
     }
 
-    private String determineSearchResultMessage(ResultSet results) throws SQLException {
-        boolean isEmpty = true;
-        String message = "";
-        while(results.next()) {
-            isEmpty = false;
-            message += results.getString("name") + ": " + results.getString("content") + "\n";
+    private String determineSearchResultMessage(HashMap<Long, ArrayList<DataBase.Quote>> results) {
+        StringBuilder message = new StringBuilder();
+        for (long uid: results.keySet()) {
+            for(int i = 0; i < results.get(uid).size(); i++){
+                message.append(results.get(uid).get(i).Name + " : " + results.get(uid).get(i).Content + "\n");
+            }
         }
-        if(isEmpty){
-            message = "No result found.";
-        }
-        return message;
+        return message.toString();
     }
 
-    private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) {
+    private CompletableFuture<InteractionOriginalResponseUpdater> removeCommand(SlashCommandInteraction interaction) throws SQLException {
         String name = interaction.getOptionStringValueByName("name").orElse("");
+        String message = "Removed quote successfully";
 
-        //todo: put in request for database to remove the thing by name
-        //database not available at current time
+        boolean removed = DataBase.getInstance().RemoveEntry(DataBase.GetByType.Name, name);
 
-        return interaction.createImmediateResponder().setContent("The quote has **not** been removed.").respond();
+        if(!removed){
+            message = "Quote **not** removed successfully";
+        }
+
+        return interaction.createImmediateResponder().setContent(message).respond();
     }
 
-    private  CompletableFuture<InteractionOriginalResponseUpdater> addFeedback(SlashCommandInteraction interaction) {
+    private  CompletableFuture<InteractionOriginalResponseUpdater> addFeedback(SlashCommandInteraction interaction) throws SQLException {
         String input = interaction.getOptionStringValueByName("input").orElse("");
-        String userID = interaction.getUser().getIdAsString();
-        String date = interaction.getCreationTimestamp().toString();
+        Long userID = interaction.getUser().getId();
+        String message = "Feedback added! Thank You";
 
-        /*JSONObject jsonObject = new JSONObject();
-        jsonObject.put("input", input);
-        jsonObject.put("user-id", userID);
-        jsonObject.put("date", date);
+        boolean added = DataBase.getInstance().AddFeedback(userID, input);
 
-        if (FeedbackJSONSingleton.appendToJSON(jsonObject)) {
-            return interaction.createImmediateResponder().setContent("Your feedback has been received.").respond();
-        } else {
-            return interaction.createImmediateResponder().setContent("Your feedback has **not** been received.").respond();
-        }*/
-        return null;
+        if(!added){
+            message = "Feedback **not** added!";
+        }
+
+        return interaction.createImmediateResponder().setContent(message).respond();
     }
 
-    private  CompletableFuture<InteractionOriginalResponseUpdater> quoteAdd(SlashCommandInteraction interaction) {
+    private  CompletableFuture<InteractionOriginalResponseUpdater> quoteAdd(SlashCommandInteraction interaction) throws SQLException {
         String name = interaction.getOptionStringValueByName("name").orElse("");
         String content = interaction.getOptionStringValueByName("content").orElse("");
-        String userID = interaction.getUser().getIdAsString();
-        /*
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
-        jsonObject.put("content", content);
-        jsonObject.put("user-id", userID);
+        Long userID = interaction.getUser().getId();
+        String message = "Quote created successfully";
 
-        if (QuoteJSONSingleton.appendToJSON(jsonObject)) {
-            return interaction.createImmediateResponder().setContent("Your quote has been added.").respond();
-        } else {
-            return interaction.createImmediateResponder().setContent("Your quote has **not** been added.").respond();
-        }*/
-        return null;
+        boolean created = DataBase.getInstance().CreateEntry(userID, name, content);
+
+        if(!created){
+            message = "Quote **not** created successfully";
+        }
+
+        return interaction.createImmediateResponder().setContent(message).respond();
     }
 
     private CompletableFuture<InteractionOriginalResponseUpdater> quoteRetrieve(SlashCommandInteraction interaction) throws SQLException {
         String quoteName = interaction.getFirstOptionStringValue().orElse("");
 
-        ResultSet results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, quoteName);
+        HashMap<Long, ArrayList<DataBase.Quote>> results = DataBase.getInstance().GetQuotes(DataBase.GetByType.Name, quoteName);
 
-        if(results == null) return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
+        if(results.isEmpty()) return interaction.createImmediateResponder().setContent("No matching quotes found.").respond();
 
-        String content = results.getString("Content");
+        String content = determineSearchResultMessage(results);
         return interaction.createImmediateResponder().setContent(content).respond();
     }
 
